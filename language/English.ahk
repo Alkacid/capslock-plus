@@ -28,6 +28,11 @@ global lang_yd_dict:=   "------------------------------ Youdao dictionary ------
 global lang_yd_phrase:= "----------------------------------- Phrase ------------------------------------"
 global lang_yd_free_key_unavailable_warning:="Youdao Translate no longer provides free translation API, now you can only use the paid API (new accounts have a trial amount), please refer to the instructions in the [TTranslate] section of the CapsLock+settingsDemo.ini file to set up the key and use the translation function."
 
+global lang_openai_name:="LLM Translation"
+global lang_openai_errorConfig:="lack of OpenAI API configuration [Url,Key,Model,Prompt], LLM translation cannot be used"
+global lang_openai_errorNoNet:="Error on sending request, maybe the network is disconnected"
+global lang_openai_errorNoResults:="No translation results, the network may be disconnected or the text is too long"
+
 global lang_settingsFileContent:=""
 lang_settingsFileContent=
 (
@@ -281,18 +286,26 @@ progressColor=0x00cc99
 ; ## +T Translation settings (Chinese <-> English)
 
 [TTranslate]
+; Translation API type, currently can only be 1 or 2
+; 0: Free version of Youdao API (no longer available, no longer provided by Youdao)
+; 1: Paid version of Youdao API (default value)
+apiType=1
+
+;>>>>>>
+;Parameters for OpenAI API 
+openaiUrl=https://api.openai.com/v1/chat/completions
+openaiKey=abc
+openaiModel=gpt-4o
+openaiPrompt="Translate the given text into Chinese. If the text to be translated is a word, please provide a detailed explanation of that word."
+;<<<<<<
+
+;>>>>>>
+; Parameters for paid version Youdao application
 ; About Youdao API
 ; The translation function is implemented by calling Youdao API.
 
 ; Youdao's paid version API website: https://ai.youdao.com/console/#/
 ; Getting started docs about Youdao's API: https://ai.youdao.com/doc.s#guide
-
-; Translation API type, currently can only be 1
-; 0: Free version of Youdao API (no longer available, no longer provided by Youdao)
-; 1: Paid version of Youdao API (default value)
-apiType=1
-
-; Parameters for paid version Youdao application
 
 ; Application ID
 appPaidID=xxx
@@ -304,7 +317,7 @@ appPaidKey=xxx
 ; only the paid version of the API can be used. The following parameters related to the free version of the API have been deprecated, please delete them if they are used in your settings file.
 ; apiKey=xxx
 ; keyFrom=xxx
-
+;<<<<<<
 
 ;----------------------------------------------------------------;
 
