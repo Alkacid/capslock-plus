@@ -5,7 +5,7 @@
 #Include lib_json.ahk   	;引入json解析文件
 #Include sha256.ahk		;引入sha256加密文件
 
-global TransEdit,transEditHwnd,transGuiHwnd, NativeString
+global TransEdit,transEditHwnd,transGuiHwnd, NativeString,openaiGuiHwnd,openaiEditHwnd,OpenaiEdit
 
 youdaoApiInit:
 global youdaoApiString:=""
@@ -44,6 +44,12 @@ return
 
 ydTranslate(ss)
 {
+
+if(CLSets.TTranslate.apiType = 2 ){
+	openaiTranslate(ss)
+	return
+}
+
 if(CLSets.TTranslate.apiType = 0 || CLSets.TTranslate.appPaidID = "")
 {
 	MsgBox, %lang_yd_free_key_unavailable_warning%
@@ -314,4 +320,120 @@ CreateUUID()
         if !(DllCall("rpcrt4.dll\UuidToString", "ptr", &puuid, "uint*", suuid))
             return StrGet(suuid), DllCall("rpcrt4.dll\RpcStringFree", "uint*", suuid)
     return ""
+}
+
+
+openaiTranslate(ss)
+{
+	if (ss = ""){
+        return
+    }
+    if (CLSets.TTranslate.openaiKey = "" || CLSets.TTranslate.openaiModel = "" || CLSets.TTranslate.openaiUrl = "" || CLSets.TTranslate.openaiPrompt = "")
+    {
+        MsgBox, %lang_openai_errorConfig%
+        return
+    }
+
+    ; ss := RegExReplace(ss, "\r\n", "\n") ; 处理换行符
+
+    NativeString := Trim(ss)
+
+    openaiGui:
+    MsgBoxStr := NativeString ? lang_openai_translating : ""
+
+    DetectHiddenWindows, On
+    WinGet, ifGuiExistButHide, Count, ahk_id %openaiGuiHwnd%
+    if (ifGuiExistButHide)
+    {
+        ControlSetText, , %MsgBoxStr%, ahk_id %openaiEditHwnd%
+        ControlFocus, , ahk_id %openaiEditHwnd%
+        WinShow, ahk_id %openaiGuiHwnd%
+    }
+    else
+    {
+        Gui, new, +HwndopenaiGuiHwnd, %lang_openai_name%
+        Gui, +AlwaysOnTop -Border +Caption -Disabled -LastFound -MaximizeBox -OwnDialogs -Resize +SysMenu -Theme -ToolWindow
+        Gui, Font, s10 w400, Microsoft YaHei UI
+        Gui, Add, Button, x-40 y-40 Default, OK  
+        Gui, Add, Edit, x-2 y0 w504 h405 vOpenaiEdit HwndopenaiEditHwnd -WantReturn -VScroll, %MsgBoxStr%
+        Gui, Color, ffffff, fefefe
+        Gui, +LastFound
+        WinSet, TransColor, ffffff 210
+        Gui, Show, Center w500 h402, %lang_openai_name%
+        ControlFocus, , ahk_id %openaiEditHwnd%
+        
+        SetTimer, setTransActive2, 50
+    }
+
+    if (NativeString)
+    {
+        SetTimer, openaiApi, -1
+        return
+    }
+    return
+
+    openaiApi:
+    apiUrl := CLSets.TTranslate.openaiUrl
+    apiModel := CLSets.TTranslate.openaiModel
+    apiKey := CLSets.TTranslate.openaiKey
+    apiPrompt := CLSets.TTranslate.openaiPrompt
+
+	; 创建字典
+    jsonData := {}
+    jsonData.model := apiModel
+    jsonData.messages := [{ "role": "system", "content": apiPrompt },{ "role": "user", "content": NativeString }]
+
+    ; 将字典转换为 JSON 字符串
+    jsonString := JSON.Dump(jsonData)
+
+    whr := ComObjCreate("Msxml2.XMLHTTP")
+    whr.Open("POST", apiUrl, True) ; True 表示异步请求
+    whr.SetRequestHeader("Content-Type", "application/json")
+    whr.SetRequestHeader("Authorization", "Bearer " . apiKey)
+
+    whr.onreadystatechange := Func("OnReadyStateChange").Bind(whr)
+    whr.Send(jsonString)
+    return
+}
+
+OnReadyStateChange(whr)
+{
+    if (whr.readyState != 4) ; 4 表示请求完成
+        return
+
+    try
+    {
+        responseStr := whr.ResponseText
+        transJson := JSON.Load(responseStr)
+
+        if (transJson.choices[1].message.content)
+        {
+            MsgBoxStr := transJson.choices[1].message.content
+            MsgBoxStr := StrReplace(MsgBoxStr, "`n", "`r`n") ; 处理换行符
+        }
+        else
+        {
+            MsgBoxStr := lang_openai_errorNoResults
+        }
+    }
+    catch
+    {
+        MsgBoxStr := lang_openai_errorNoNet
+    }
+
+    setOpenaiText(MsgBoxStr)
+}
+
+setOpenaiText(MsgBoxStr)
+{
+    ControlSetText, , %MsgBoxStr%, ahk_id %openaiEditHwnd%
+    ControlFocus, , ahk_id %openaiEditHwnd%
+    SetTimer, setTransActive2, 50
+}
+
+setTransActive2:
+IfWinExist, ahk_id %transGuiHwnd%
+{
+    SetTimer, ,Off
+    WinActivate, ahk_id %transGuiHwnd%
 }

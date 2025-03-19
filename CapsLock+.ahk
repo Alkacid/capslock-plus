@@ -318,6 +318,12 @@ try
 Capslock2:=""
 return
 
+'::
+try
+    SendInput, {U+005c}
+Capslock2:=""
+return
+
 -::
 try
     runFunc(keyset.caps_minus)
@@ -354,13 +360,6 @@ try
     runFunc(keyset.caps_semicolon)
 Capslock2:=""
 Return
-
-'::
-try
-    runFunc(keyset.caps_quote)
-Capslock2:=""
-return
-
 
 ,::
 try
@@ -892,6 +891,40 @@ return
 #If
 
 
+;---------------------自定义脚本----------------
+
+; 在文件末尾的 #If 指令之前添加以下代码
+global F12State
+global F12Timer 
+
+F12::
+    F12Timer:=F12State := 1
+
+    SetTimer, setF12Timer, -300  ; 启动 300ms 计时器
+    KeyWait, F12
+    F12State := ""
+
+    if (F12Timer) {  ; 300ms 过后 F12Timer 仍为 0，说明没有按其他键
+        SetTimer, setF12Timer, Off
+        SendInput, {F12}  ; 发送原始 F12
+    }
+    return
+
+setF12Timer:
+    F12Timer := ""  ; 标记 F12 长按超过 300ms
+    return
+
+#If (F12State = 1)  ; 当 F12 按下时启用以下热键
+
+Delete::
+    SetTimer, setF12Timer, Off  ; 停止定时器，防止 F12 触发
+    Run, "D:\Apps\A-scripts\sleep2"  ; 运行批处理文件
+    ; Run, "D:\Apps\PSTools\psshutdown.exe -d -t 0"
+    F12State := ""  ; 复位状态
+    F12Timer := ""
+    return
+
+#If  ; 结束条件编译
 
 
 GuiClose:

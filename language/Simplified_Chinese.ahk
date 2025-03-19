@@ -26,7 +26,12 @@ global lang_yd_errorNoFunds:="帐户余额不足"
 global lang_yd_trans:="------------------------------------有道翻译------------------------------------"
 global lang_yd_dict:="------------------------------------有道词典------------------------------------"
 global lang_yd_phrase:="--------------------------------------短语--------------------------------------"
-global lang_yd_free_key_unavailable_warning:="有道翻译已经不再提供免费的翻译 API，现在只能使用收费 API（新账号有试用额度），请参考 CapsLock+settingsDemo.ini 文件中 [TTranslate] 部分的说明设置密钥后使用翻译功能。"
+global lang_yd_free_key_unavailable_warning:="有道翻译已经不再提供免费的翻译 API，现在只能使用收费 API（新账号有试用额度）或使用openai SDK LLM翻译。请参考 CapsLock+settingsDemo.ini 文件中 [TTranslate] 部分的说明设置密钥后使用翻译功能。"
+
+global lang_openai_name:="LLM翻译"
+global lang_openai_errorConfig:="缺少OpenAI的API配置[Url,Key,Model,Prompt]，LLM翻译无法使用"
+global lang_openai_errorNoNet:="发送请求异常"
+global lang_openai_errorNoResults:="无翻译结果, 可能是网络已断开或文本过长"
 
 global lang_settingsFileContent:=""
 lang_settingsFileContent=
@@ -256,18 +261,29 @@ progressColor=0x00cc99
 ; ## +T翻译设置
 
 [TTranslate]
+;翻译 API 类型，目前只能为 1或2
+;0: 免费版有道 API（已不可使用，有道翻译不再提供）
+;1: 收费版有道 API（默认值）
+;2: 使用兼容OpenAI SDK 的 LLM 翻译（需要配置 OpenAI 的 API， 包含[openaiUrl,openaiKey,openaiModel,openaiPrompt]）
+
+
+apiType=2
+
+;>>>>>>
+;OpenAI API 设置
+openaiUrl=https://api.openai.com/v1/chat/completions
+openaiKey=abc
+openaiModel=gpt-4o
+openaiPrompt="Translate the given text into Chinese. If the text to be translated is a word, please provide a detailed explanation of that word."
+;<<<<<<
+
+;>>>>>>
 ;有道api接口
 ;翻译功能通过调用有道的api实现。
 
 ;收费版api申请网址: https://ai.youdao.com/console/#/
 ;有道翻译 API 入门指南: https://ai.youdao.com/doc.s#guide
-
-;翻译 API 类型，目前只能为 1
-;0: 免费版有道 API（已不可使用，有道翻译不再提供）
-;1: 收费版有道 API（默认值）
-apiType=1
-
-;收费版申请的参数
+;有道翻译收费版申请的参数
 
 ;应用ID
 appPaidID=xxx
@@ -279,6 +295,7 @@ appPaidKey=xxx
 ;只能使用收费版的 API，以下与免费版 API 相关的参数已经废弃，如果你的设置文件中有使用，请删除掉。
 ;apiKey=xxx
 ;keyFrom=xxx
+;<<<<<<
 
 ;----------------------------------------------------------------;
 
